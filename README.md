@@ -17,3 +17,9 @@ cargo run
 - `src/ui.rs` – UI setup & counter update
 - `src/setup.rs` – startup + escape & reset logic
 - `src/main.rs` – app orchestration
+
+## Example Video
+
+
+https://github.com/user-attachments/assets/cf37ec04-0005-4ca3-a798-c7ff92cb6ebf
+
