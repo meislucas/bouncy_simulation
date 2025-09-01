@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::ring::create_circular_ring;
-use crate::balls::{spawn_ball_with_physics, spawn_ball_at_center_with_physics};
+use crate::balls::{spawn_ball, SpawnOrigin};
 use crate::ui::spawn_ui;
 use crate::components::{RingPhysics, BouncyBall};
 
@@ -15,7 +15,7 @@ pub fn setup_system(
     commands.spawn(Camera2d);
     create_circular_ring(&mut commands, &mut meshes, &mut materials);
     commands.spawn((RigidBody::Fixed, Transform::default(), GlobalTransform::default(), RingPhysics));
-    spawn_ball_with_physics(&mut commands, &mut meshes, &mut materials);
+    spawn_ball(&mut commands, &mut meshes, &mut materials, SpawnOrigin::RandomDisk { max_radius: 100.0 });
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     spawn_ui(&mut commands, font);
 }
@@ -35,8 +35,8 @@ pub fn check_ball_escape(
         let p = transform.translation.truncate();
         if p.x < left - buffer || p.x > right + buffer || p.y < bottom - buffer || p.y > top + buffer {
             commands.entity(entity).despawn();
-            spawn_ball_at_center_with_physics(&mut commands, &mut meshes, &mut materials);
-            spawn_ball_at_center_with_physics(&mut commands, &mut meshes, &mut materials);
+            spawn_ball(&mut commands, &mut meshes, &mut materials, SpawnOrigin::NearCenter { max_offset: 20.0 });
+            spawn_ball(&mut commands, &mut meshes, &mut materials, SpawnOrigin::NearCenter { max_offset: 20.0 });
         }
     }
 }
@@ -50,6 +50,6 @@ pub fn handle_reset_input(
 ) {
     if input.just_pressed(KeyCode::KeyR) {
         for e in ball_query.iter() { commands.entity(e).despawn(); }
-        spawn_ball_with_physics(&mut commands, &mut meshes, &mut materials);
+    spawn_ball(&mut commands, &mut meshes, &mut materials, SpawnOrigin::RandomDisk { max_radius: 100.0 });
     }
 }

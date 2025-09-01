@@ -5,6 +5,12 @@ use rand::Rng;
 use crate::components::{BouncyBall, InitialSpeed, TrailSpawner};
 use crate::constants::{BALL_RADIUS, MIN_SPEED_FACTOR};
 
+/// How to choose initial position for a new ball
+pub enum SpawnOrigin {
+    RandomDisk { max_radius: f32 },
+    NearCenter { max_offset: f32 },
+}
+
 pub fn get_random_neon_color() -> Color {
     use std::sync::atomic::{AtomicU32, Ordering};
     static COUNTER: AtomicU32 = AtomicU32::new(0);
@@ -22,64 +28,41 @@ pub fn get_random_neon_color() -> Color {
     if count < 8 { colors[count as usize] } else { let mut rng = rand::rng(); colors[rng.random_range(0..8)] }
 }
 
-pub fn spawn_ball_with_physics(
+pub fn spawn_ball(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
+    origin: SpawnOrigin,
 ) {
     let mut rng = rand::rng();
-    let angle = rng.random_range(0.0..2.0 * std::f32::consts::PI);
-    let radius = rng.random_range(0.0..100.0);
-    let x = radius * angle.cos();
-    let y = radius * angle.sin();
-    let velocity_x = rng.random_range(-400.0..400.0);
-    let velocity_y = rng.random_range(-400.0..400.0);
-    let ball_color = get_random_neon_color();
+    let (x, y) = match origin {
+        SpawnOrigin::RandomDisk { max_radius } => {
+            let angle = rng.random_range(0.0..std::f32::consts::TAU);
+            let r = rng.random_range(0.0..max_radius);
+            (r * angle.cos(), r * angle.sin())
+        }
+        SpawnOrigin::NearCenter { max_offset } => {
+            (rng.random_range(-max_offset..max_offset), rng.random_range(-max_offset..max_offset))
+        }
+    };
+    let vx = rng.random_range(-400.0..400.0);
+    let vy = rng.random_range(-400.0..400.0);
+    let color = get_random_neon_color();
     commands.spawn((
         Mesh2d(meshes.add(Circle::new(BALL_RADIUS))),
-        MeshMaterial2d(materials.add(ColorMaterial::from(ball_color))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(color))),
         Transform::from_xyz(x, y, 1.0),
         RigidBody::Dynamic,
         Collider::ball(BALL_RADIUS),
-        Velocity { linvel: Vec2::new(velocity_x, velocity_y), angvel: 0.0 },
+        Velocity { linvel: Vec2::new(vx, vy), angvel: 0.0 },
         Restitution { coefficient: 1.0, combine_rule: CoefficientCombineRule::Max },
         Friction::coefficient(0.0),
         Damping { linear_damping: 0.0, angular_damping: 0.0 },
         GravityScale(0.0),
         Ccd::enabled(),
         Sleeping::disabled(),
-        InitialSpeed(Vec2::new(velocity_x, velocity_y).length()),
-        BouncyBall { color: ball_color },
-        TrailSpawner { since_last: 0.0 },
-    ));
-}
-
-pub fn spawn_ball_at_center_with_physics(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-) {
-    let mut rng = rand::rng();
-    let offset_x = rng.random_range(-20.0..20.0);
-    let offset_y = rng.random_range(-20.0..20.0);
-    let velocity_x = rng.random_range(-400.0..400.0);
-    let velocity_y = rng.random_range(-400.0..400.0);
-    let ball_color = get_random_neon_color();
-    commands.spawn((
-        Mesh2d(meshes.add(Circle::new(BALL_RADIUS))),
-        MeshMaterial2d(materials.add(ColorMaterial::from(ball_color))),
-        Transform::from_xyz(offset_x, offset_y, 1.0),
-        RigidBody::Dynamic,
-        Collider::ball(BALL_RADIUS),
-        Velocity { linvel: Vec2::new(velocity_x, velocity_y), angvel: 0.0 },
-        Restitution { coefficient: 1.0, combine_rule: CoefficientCombineRule::Max },
-        Friction::coefficient(0.0),
-        Damping { linear_damping: 0.0, angular_damping: 0.0 },
-        GravityScale(0.0),
-        Ccd::enabled(),
-        Sleeping::disabled(),
-        InitialSpeed(Vec2::new(velocity_x, velocity_y).length()),
-        BouncyBall { color: ball_color },
+        InitialSpeed(Vec2::new(vx, vy).length()),
+        BouncyBall { color },
         TrailSpawner { since_last: 0.0 },
     ));
 }
