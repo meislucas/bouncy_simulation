@@ -1,0 +1,36 @@
+[package]
+name = "bouncy_simulation"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.16.1", default-features = false, features = [
+    # Core features for basic simulation
+    "bevy_winit",         # Window management
+    "bevy_render",        # Rendering
+    "bevy_core_pipeline", # Core rendering pipeline
+    "bevy_sprite",        # 2D sprites
+    "bevy_asset",         # Asset loading
+    "bevy_ui",            # UI system
+    "bevy_text",          # Text rendering
+    "png",                # PNG support
+    "x11",                # Linux support
+] }
+bevy_rapier2d = "0.30.0"
+rand = "0.9.2"
+
+# Optimize development builds
+[profile.dev]
+opt-level = 1 # Basic optimizations for dependencies while keeping debug info
+debug = 2     # Full debug info for your code
+
+# Optimize dependencies even in dev mode
+[profile.dev.package."*"]
+opt-level = 3 # Full optimization for dependencies
+debug = false # No debug info for dependencies (faster compile)
+
+# Fast builds for development (optional profile)
+[profile.dev-fast]
+inherits = "dev"
+opt-level = 0 # No optimization for your code
+debug = 1     # Line tables only for debugging
